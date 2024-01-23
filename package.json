@@ -4,13 +4,19 @@
   "type": "module",
   "description": "A command line tool to install libraries",
   "main": "index.js",
+  "bin": {
+    "upy-package": "index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": {
+    "name": "Sebastian Romero",
+    "email": "s.romero@arduino.cc",
+    "url": "https://github.com/sebromero"
+  },
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.5",
     "commander": "^11.1.0",
     "inquirer": "^9.2.12",
     "js-yaml": "^4.1.0"
