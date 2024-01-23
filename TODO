@@ -1,0 +1,3 @@
+- Consider using mpy cross to cross compile the libraries before uploading.
+- Add another registry for the libraries.
+- Package mpremote as binary.
