@@ -1,8 +1,6 @@
 import { execSync } from 'child_process';
 import inquirer from 'inquirer';
 
-const ARDUINO_VID = '0x2341';
-
 export class BoardManager {
     
     getConnectedBoards() {
@@ -26,8 +24,12 @@ export class BoardManager {
         return boardInfo;
     }
     
-    async getArduinoBoard() {
-        const boards = this.getConnectedBoards().filter((board) => board.vendorID === ARDUINO_VID);
+    async getBoard(vendorID = null) {
+        let boards = this.getConnectedBoards()
+        
+        if(vendorID){
+            boards = boards.filter((board) => board.vendorID === vendorID);
+        }
 
         if (boards.length === 0) {
             return null;

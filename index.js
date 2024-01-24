@@ -11,6 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Extract the command version from the package.json file
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'))).version;
+const ARDUINO_VID = '0x2341';
 
 const packageManager = new PackageManager();
 const boardManager = new BoardManager();
@@ -63,7 +64,7 @@ export async function main() {
     .option('--debug', 'Enable debug output')
     .description('Install a MicroPython package on a connected Arduino board')
     .action(async (packageName, options) => {
-      const selectedBoard = await boardManager.getArduinoBoard();
+      const selectedBoard = await boardManager.getBoard(ARDUINO_VID);
       try {
         console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
         await packageManager.installPackage(packageName, selectedBoard.ID, options.path);
