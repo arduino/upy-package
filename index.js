@@ -49,10 +49,10 @@ export async function main() {
     .option('--debug', 'Enable debug output')
     .description('Install a MicroPython package on a connected Arduino board')
     .action(async (packageName, options) => {
-      const selectedBoardID = await boardManager.getBoardID();
+      const selectedBoard = await boardManager.getArduinoBoard();
       try {
-        console.log(`📦 Installing ${packageName} on board with ID ${selectedBoardID}`);
-        await packageManager.installPackage(packageName, selectedBoardID, options.path);
+        console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
+        await packageManager.installPackage(packageName, selectedBoard.ID, options.path);
       } catch (error) {
         console.error(`❌ ${error.message}`);
         if (options.debug) {

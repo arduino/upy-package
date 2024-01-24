@@ -1,45 +1,54 @@
 import { execSync } from 'child_process';
 import inquirer from 'inquirer';
 
+const ARDUINO_VID = '0x2341';
+
 export class BoardManager {
     
-    getConnectedBoards(vendorID = '0x2341') {
-        const command = `arduino-cli board list --format json`;
-        const output = JSON.parse(execSync(command, { encoding: 'utf-8' }));
+    getConnectedBoards() {
+        const command = `mpremote connect list`;
 
-        // Filter boards with given vendor ID
-        const boards = output.filter((board) => {
-            const { port } = board;
-            return port.properties && port.properties.vid === vendorID;
+        // Convert output e.g. /dev/cu.usbmodem1234561 123456 2341:056b Arduino Nano ESP32 to
+        // object with properties port, ID, vendorID, productID, productName
+        const entries = execSync(command, { encoding: 'utf-8' }).split('\n');
+        entries.pop(); // Remove last empty line
+        const boardInfo = entries.map((line) => {
+            const parts = line.split(' ');
+            return {
+                port: parts[0],
+                ID: parts[1],
+                vendorID: `0x${parts[2].split(':')[0]}`,
+                productID: `0x${parts[2].split(':')[1]}`,
+                name: parts.slice(3).join(' '),
+            };
         });
 
-        return boards;
+        return boardInfo;
     }
     
-    async getBoardID() {
-        const boards = this.getConnectedBoards();
+    async getArduinoBoard() {
+        const boards = this.getConnectedBoards().filter((board) => board.vendorID === ARDUINO_VID);
 
         if (boards.length === 0) {
             return null;
         }
 
         if (boards.length === 1) {
-            return boards[0].port.hardware_id;
+            return boards[0];
         }
 
         const boardOptions = boards.map((board) => {
-            return `${board.port.address}`;
+            return { "name" : `${board.name} at ${board.port}`, "value" : board };
         });
 
         const selection = await inquirer.prompt([
             {
                 type: 'list',
-                name: 'selectedBoard',
-                message: 'Select the port connected to your Arduino board:',
+                name: 'selectedPort',
+                message: 'Please select your board:',
                 choices: boardOptions,
             },
         ]);
-        const selectedBoard = boards.find((board) => board.port.address === selection.selectedBoard);
-        return selectedBoard.port.hardware_id;
+        return selection.selectedPort;
     }
 }

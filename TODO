@@ -8,4 +8,3 @@
 - Think about name clashes in multiple package indices.
 - Add support for packages without package.json (override in index)
 - Handle error for missing package.json by suggesting to add it
-- Consider using mpremote directly instead of arduino-cli for board detection.
