@@ -50,21 +50,27 @@ export class PackageManager {
         return packages;
     }
 
-    // Function to list packages from a given registry URL
-    async listPackages(selectedPackage = null) {
+    async getPackageInfo(packageName) {
         const packageList = await this.getPackageList();
-
-        if (packageList) {
-            if (selectedPackage) {
-                let packageInfo = packageList.find((pkg) => pkg.name === selectedPackage);
-                if (!packageInfo) return;
-                return `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}\n📄 ${packageInfo.description}`;
-            } else {
-                return packageList.map((pkg) => `📦 ${pkg.name}`).join('\n');
-            }
-        } else {
-            return null;
+        let packageInfo = packageList.find((pkg) => pkg.name === packageName);
+        if (!packageInfo) return null;
+        let info = `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}\n📄 ${packageInfo.description}`;
+        if(packageInfo.tags) {
+            info += `\n🔖 [${packageInfo.tags.join(', ')}]`;
         }
+        if(packageInfo.authors) {
+            info += `\n👤 ${packageInfo.authors.join(', ')}`;
+        }
+        if(packageInfo.license) {
+            info += `\n📜 ${packageInfo.license}`;
+        }
+        return info;
+    }
+
+    // Function to list packages from a given registry URL
+    async listPackages() {
+        const packageList = await this.getPackageList();
+        return packageList ? packageList.map((pkg) => `📦 ${pkg.name}`).join('\n') : null;
     }
 
     // Function to find a package matching the supplied pattern

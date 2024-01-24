@@ -23,12 +23,23 @@ export async function main() {
 
   program
     .command('list')
-    .argument('[package]', 'Print package details')
     .description('List packages from registries')
-    .action(async (selectedPackage) => {
-      const packages = await packageManager.listPackages(selectedPackage);
+    .action(async () => {
+      const packages = await packageManager.listPackages();
       if (packages) {
         console.log(packages);
+      }
+    });
+
+  program
+    .command('info <package>')
+    .description('Get information about a package')
+    .action(async (packageName) => {
+      const packageInfo = await packageManager.getPackageInfo(packageName);
+      if (packageInfo) {
+        console.log(packageInfo);
+      } else {
+        console.log(`🤷 No package found with name ${packageName}`);
       }
     });
 
