@@ -19,7 +19,7 @@ const boardManager = new BoardManager();
 export async function main() {
   program
     .version(version)
-    .description('Arduino Tool - A command-line tool for Arduino development');
+    .description('upy-package - A command-line tool to install MicroPython packages on Arduino boards');
 
   program
     .command('list')
@@ -44,6 +44,20 @@ export async function main() {
     });
 
   program
+    .command('find <pattern>')
+    .description('Find packages using the supplied search pattern')
+    .action(async (pattern) => {
+      const packages = await packageManager.findPackages(pattern);
+      if (packages.length > 0) {
+        for (const pkg of packages) {
+          console.log(`📦 ${pkg.name}`);
+        }
+      } else {
+        console.log(`🤷 No matching packages found.`);
+      }
+    });
+
+  program
     .command('install <package>')
     .option('--path <target-path>', 'Target path to install the package to')
     .option('--debug', 'Enable debug output')
@@ -57,22 +71,8 @@ export async function main() {
         console.error(`❌ ${error.message}`);
         if (options.debug) {
           console.error(error.stack);
-        } 
-        process.exit(1);
-      }
-    });
-
-  program
-    .command('find <pattern>')
-    .description('Find packages matching the supplied pattern')
-    .action(async (pattern) => {
-      const packages = await packageManager.findPackages(pattern);
-      if (packages.length > 0) {
-        for(const pkg of packages) {
-          console.log(`📦 ${pkg.name}`);
         }
-      } else {
-          console.log(`🤷 No matching packages found.`);
+        process.exit(1);
       }
     });
 

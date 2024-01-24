@@ -111,6 +111,7 @@ const searchPackages = (directory, outputFilename, indexUrl) => {
 // Check if command line arguments are provided
 if (process.argv.length < 5) {
   // Note: Official MicroPython lib index is: https://micropython.org/pi/v2
+  // Example usage: node create-index.mjs ../micropython-lib/micropython micropython-lib.yml https://micropython.org/pi/v2
   console.error('Usage: node create-index.mjs <directory> <outputFilename.yml> <indexUrl>');
 } else {
   const directory = process.argv[2];

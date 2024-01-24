@@ -8,3 +8,4 @@
 - Think about name clashes in multiple package indices.
 - Add support for packages without package.json (override in index)
 - Handle error for missing package.json by suggesting to add it
+- Host index on CDN (setup cronjob in github actions?)
