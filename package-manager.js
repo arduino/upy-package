@@ -3,7 +3,7 @@ import { execSync } from 'child_process';
 
 const registryUrls = [
     'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
-    // Add more registry URLs as needed
+    'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
 ];
 
 export class PackageManager {
@@ -18,6 +18,7 @@ export class PackageManager {
             return url;
         }
 
+        // Only Github URLs are supported
         if (!url.includes("github.com")) {
             return null;
         }
@@ -102,13 +103,20 @@ export class PackageManager {
             throw new Error(`Package '${packageName}' not found.`);
         }
 
-        const packageURL = this.convertGithubURL(selectedPackage?.url);
+        
+        let packageURL = this.convertGithubURL(selectedPackage?.url);
         if (!packageURL) {
             throw new Error(`Package ${packageName} not found`);
         }
+        
+        if(selectedPackage.index){
+            // Only take last path segment of package URL if it's in an index
+            packageURL = packageURL.split('/').pop();
+        }
 
         const targetPathArg = targetPath ? `--target=${targetPath}` : '';
-        const command = `mpremote connect id:${boardID} mip install ${targetPathArg} ${packageURL}`;
+        const indexArg = selectedPackage.index ? `--index ${selectedPackage.index}` : '';
+        const command = `mpremote connect id:${boardID} mip install ${targetPathArg} ${indexArg} ${packageURL}`;
         
         try {
             execSync(command, { stdio: ['ignore', 'inherit', 'pipe'] });

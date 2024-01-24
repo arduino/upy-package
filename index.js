@@ -51,6 +51,7 @@ export async function main() {
     .action(async (packageName, options) => {
       const selectedBoardID = await boardManager.getBoardID();
       try {
+        console.log(`📦 Installing ${packageName} on board with ID ${selectedBoardID}`);
         await packageManager.installPackage(packageName, selectedBoardID, options.path);
       } catch (error) {
         console.error(`❌ ${error.message}`);

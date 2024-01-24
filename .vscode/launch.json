@@ -13,6 +13,7 @@
             ],
             "program": "${workspaceFolder}/index.js",
             // "args": ["install", "--path", "/flash/lib", "arduino-iot-cloud-py"]
+            // "args": ["install", "ssd1306"]
             // "args": ["install", "micropython-i2c-lcd"]
             // "args": ["install", "random-name"]
             // "args": ["list", "micropython-rotary"]
