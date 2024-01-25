@@ -12,10 +12,12 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/index.js",
-            // "args": ["install", "--path", "/flash/lib", "arduino-iot-cloud-py"]
-            // "args": ["install", "ssd1306"]
-            // "args": ["install", "micropython-i2c-lcd"]
-            // "args": ["install", "random-name"]
+            // "args": ["install", "--path", "/flash/lib", "arduino-iot-cloud-py"] // Test target path
+            // "args": ["install", "ssd1306"] // Test library from official index
+            // "args": ["install", "micropython-my9221"] // Test library with file override
+            // "args": ["install", "micropython-i2c-lcd"] // Test library from custom index
+            // "args": ["install", "random-name"] // Test non-existing library
+
             // "args": ["list", "micropython-rotary"]
             // "args": ["find", "cloud"]
         }

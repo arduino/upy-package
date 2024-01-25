@@ -2,9 +2,12 @@ import yaml from 'js-yaml';
 import { execSync } from 'child_process';
 
 const registryUrls = [
-    'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
+    // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
+    'https://raw.githubusercontent.com/arduino/package-index-py/file-override/package-list.yaml',
     'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
 ];
+
+const DEFAULT_LIB_PATH = '/lib';
 
 export class PackageManager {
     /**
@@ -34,6 +37,15 @@ export class PackageManager {
         return constructedURL;
     }
 
+    getRepositoryFromURL(url) {
+        if (url.startsWith('github:')) {
+            return url.split(':')[1].split('@')[0];
+        } else if (url.startsWith('http')) {
+            return url.split('/')[4].split('.')[0];
+        }
+        return null;
+    }
+
     // Function to fetch and parse the package list from a given registry URL
     async getPackageList() {
         let packages = [];
@@ -55,7 +67,12 @@ export class PackageManager {
         const packageList = await this.getPackageList();
         let packageInfo = packageList.find((pkg) => pkg.name === packageName);
         if (!packageInfo) return null;
-        let info = `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}\n📄 ${packageInfo.description}`;
+        let info = `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}`;
+
+        if(packageInfo.description) {
+            info += `\n📝 ${packageInfo.description}`;
+        }
+
         if(packageInfo.tags) {
             info += `\n🔖 [${packageInfo.tags.join(', ')}]`;
         }
@@ -102,26 +119,44 @@ export class PackageManager {
         if (!selectedPackage) {
             throw new Error(`Package '${packageName}' not found.`);
         }
-
         
-        let packageURL = this.convertGithubURL(selectedPackage?.url);
-        if (!packageURL) {
-            throw new Error(`Package ${packageName} not found`);
-        }
+        let packageArgument;
+        let indexArg = '';
         
         if(selectedPackage.index){
             // Only take last path segment of package URL if it's in an index
-            packageURL = packageURL.split('/').pop();
+            packageArgument = selectedPackage.url.split('/').pop();
+            indexArg = selectedPackage.index ? `--index ${selectedPackage.index}` : '';
+        } else if(selectedPackage.files){
+            // If the package has files, append them to the URL
+            packageArgument = selectedPackage.files.join(' ');
+            if(!targetPath){
+                // Infer target path from URL if not specified
+                // This will serve as the package name used for import after installation
+                targetPath = `${DEFAULT_LIB_PATH}/${this.getRepositoryFromURL(selectedPackage.url)}`;
+            }
+        } else {
+            packageArgument = this.convertGithubURL(selectedPackage.url);
         }
 
+        if (!packageArgument) {
+            throw new Error(`Nothing to install for package '${packageName}'.`);
+        }    
+
         const targetPathArg = targetPath ? `--target=${targetPath}` : '';
-        const indexArg = selectedPackage.index ? `--index ${selectedPackage.index}` : '';
-        const command = `mpremote connect id:${boardID} mip install ${targetPathArg} ${indexArg} ${packageURL}`;
+        let command = `mpremote connect id:${boardID} mip install ${targetPathArg} ${indexArg} ${packageArgument}`;
+        // Remove double spaces resulting from empty arguments
+        command = command.replace(/\s\s+/g, ' ');
         
         try {
             execSync(command, { stdio: ['ignore', 'inherit', 'pipe'] });
         } catch (error) {
-            let installationError = new Error(`Error installing package '${packageName}'`);
+            let installationError = new Error(`Error installing package ${packageName}.`);
+
+            if(error.message.includes('Package not found')){
+                installationError.message += " 'package.json' file not found in package repository.";
+            }
+
             installationError.stack = error.message;
             throw installationError;
         }
