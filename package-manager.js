@@ -37,13 +37,18 @@ export class PackageManager {
         return constructedURL;
     }
 
-    getRepositoryFromURL(url) {
+    getRepositoryNameFromURL(url) {
         if (url.startsWith('github:')) {
             return url.split(':')[1].split('@')[0];
         } else if (url.startsWith('http')) {
             return url.split('/')[4].split('.')[0];
         }
         return null;
+    }
+
+    normalizeRepositoryName(name) {
+        // Replace characters so that it results in a valid Python package name
+        return name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
     }
 
     // Function to fetch and parse the package list from a given registry URL
@@ -122,6 +127,7 @@ export class PackageManager {
         
         let packageArgument;
         let indexArg = '';
+        if(!targetPath) targetPath = DEFAULT_LIB_PATH;
         
         if(selectedPackage.index){
             // Only take last path segment of package URL if it's in an index
@@ -130,10 +136,14 @@ export class PackageManager {
         } else if(selectedPackage.files){
             // If the package has files, append them to the URL
             packageArgument = selectedPackage.files.join(' ');
-            if(!targetPath){
-                // Infer target path from URL if not specified
+            
+            if(selectedPackage.files.length > 1){
+                // If there are multiple files, add the package name to the target path
+                // Infer target path from repository name
                 // This will serve as the package name used for import after installation
-                targetPath = `${DEFAULT_LIB_PATH}/${this.getRepositoryFromURL(selectedPackage.url)}`;
+                const repoName = this.getRepositoryNameFromURL(selectedPackage.url);
+                let normalizedRepoName = this.normalizeRepositoryName(repoName);
+                targetPath = `${targetPath}/${normalizedRepoName}`;
             }
         } else {
             packageArgument = this.convertGithubURL(selectedPackage.url);
