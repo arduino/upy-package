@@ -16,6 +16,60 @@ const ARDUINO_VID = '0x2341';
 const packageManager = new PackageManager();
 const boardManager = new BoardManager();
 
+async function printPackagesWithHighlights(pattern) {
+  const packages = await packageManager.findPackages(pattern);
+  if (packages && packages.length > 0) {
+      for (const [index, pkg] of packages.entries()) {
+          const { name, description, tags } = pkg;
+          const highlightedName = highlightPattern(name, pattern);
+          console.log(`📦 ${highlightedName}`);
+
+          if (description && description.toLowerCase().includes(pattern)) {
+              let truncatedDescription = description;
+              const patternIndex = truncatedDescription.toLowerCase().indexOf(pattern);
+              if (truncatedDescription.length > 80) {
+                  let start = Math.max(0, patternIndex - Math.floor((80 - pattern.length) / 2));
+                  truncatedDescription = truncatedDescription.substring(start, start + 80 - pattern.length);
+                  if (start > 0) {
+                      truncatedDescription = `...${truncatedDescription}`;
+                  }
+                  truncatedDescription += '...';
+              }
+              if (patternIndex > -1) {
+                  truncatedDescription = truncatedDescription.replace(
+                      new RegExp(pattern, 'gi'),
+                      match => highlightPattern(match, pattern)
+                  );
+              }
+              console.log(`   - Description: ${truncatedDescription}`);
+          }
+
+          if (tags && tags.length > 0) {
+              const matchingTags = tags.filter(tag => tag.toLowerCase().includes(pattern));
+              if (matchingTags.length > 0) {
+                  const highlightedTags = matchingTags.map(tag => highlightPattern(tag, pattern));
+                  console.log(`   - Tags: ${highlightedTags.join(', ')}`);
+              }
+          }
+
+          // Add an empty line if it's not the last package
+          if (index < packages.length - 1) {
+              console.log(); // Print an empty line
+          }
+      }
+  } else {
+      console.log(`🤷 No matching packages found.`);
+  }
+}
+
+function highlightPattern(text, pattern) {
+  const highlightColor = '\x1b[38;5;196m'; // ANSI escape code for a bright red foreground color
+  const boldFormatting = '\x1b[1m'; // ANSI escape code for bold formatting
+  const resetColorAndFormat = '\x1b[0m'; // ANSI escape code to reset color and formatting
+  const regex = new RegExp(pattern, 'gi');
+  return text.replace(regex, match => `${boldFormatting}${highlightColor}${match}${resetColorAndFormat}`);
+}
+
 // Main function to handle the command-line interface
 export async function main() {
   program
@@ -48,14 +102,15 @@ export async function main() {
     .command('find <pattern>')
     .description('Find packages using the supplied search pattern')
     .action(async (pattern) => {
-      const packages = await packageManager.findPackages(pattern);
-      if (packages.length > 0) {
-        for (const pkg of packages) {
-          console.log(`📦 ${pkg.name}`);
-        }
-      } else {
-        console.log(`🤷 No matching packages found.`);
-      }
+      printPackagesWithHighlights(pattern);
+      // const packages = await packageManager.findPackages(pattern);
+      // if (packages.length > 0) {
+      //   for (const pkg of packages) {
+      //     console.log(`📦 ${pkg.name}`);
+      //   }
+      // } else {
+      //   console.log(`🤷 No matching packages found.`);
+      // }
     });
 
   program
