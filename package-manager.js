@@ -104,9 +104,9 @@ export class PackageManager {
                 .filter((pkg) => {
                     const { name, description, tags } = pkg;
                     return (
-                        name.includes(pattern) ||
-                        (description && description.includes(pattern)) ||
-                        (tags && tags.some((tag) => tag.includes(pattern)))
+                        name.toLowerCase().includes(pattern) ||
+                        (description && description.toLowerCase().includes(pattern)) ||
+                        (tags && tags.some((tag) => tag.toLowerCase().includes(pattern)))
                     );
                 });
 
