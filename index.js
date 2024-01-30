@@ -25,30 +25,16 @@ async function printPackagesWithHighlights(pattern) {
           console.log(`📦 ${highlightedName}`);
 
           if (description && description.toLowerCase().includes(pattern)) {
-              let truncatedDescription = description;
-              const patternIndex = truncatedDescription.toLowerCase().indexOf(pattern);
-              if (truncatedDescription.length > 80) {
-                  let start = Math.max(0, patternIndex - Math.floor((80 - pattern.length) / 2));
-                  truncatedDescription = truncatedDescription.substring(start, start + 80 - pattern.length);
-                  if (start > 0) {
-                      truncatedDescription = `...${truncatedDescription}`;
-                  }
-                  truncatedDescription += '...';
-              }
-              if (patternIndex > -1) {
-                  truncatedDescription = truncatedDescription.replace(
-                      new RegExp(pattern, 'gi'),
-                      match => highlightPattern(match, pattern)
-                  );
-              }
-              console.log(`   - Description: ${truncatedDescription}`);
+              let truncatedDescription = truncateDescription(description, pattern);
+              truncatedDescription = highlightPattern(truncatedDescription, pattern); // Highlight pattern in truncated description
+              console.log(`📝 ${truncatedDescription}`);
           }
 
           if (tags && tags.length > 0) {
               const matchingTags = tags.filter(tag => tag.toLowerCase().includes(pattern));
               if (matchingTags.length > 0) {
                   const highlightedTags = matchingTags.map(tag => highlightPattern(tag, pattern));
-                  console.log(`   - Tags: ${highlightedTags.join(', ')}`);
+                  console.log(`🔖 [${highlightedTags.join(', ')}]`);
               }
           }
 
@@ -62,8 +48,26 @@ async function printPackagesWithHighlights(pattern) {
   }
 }
 
+function truncateDescription(description, pattern) {
+  const maxLength = 80;
+  const patternIndex = description.toLowerCase().indexOf(pattern.toLowerCase());
+  const patternLength = pattern.length;
+  const patternStartIndex = Math.max(0, patternIndex - Math.floor((maxLength - patternLength) / 2));
+  const patternEndIndex = Math.min(description.length, patternStartIndex + maxLength - patternLength);
+  let truncatedDescription = description.substring(patternStartIndex, patternEndIndex);
+  
+  if (patternStartIndex > 0) {
+    truncatedDescription = `...${truncatedDescription}`;
+  }
+  if (patternEndIndex < description.length) {
+    truncatedDescription = `${truncatedDescription}...`;
+  }
+  return truncatedDescription;
+}
+
+
 function highlightPattern(text, pattern) {
-  const highlightColor = '\x1b[38;5;196m'; // ANSI escape code for a bright red foreground color
+  const highlightColor = '\x1b[38;2;82;140;227m'; // ANSI escape code for a bright red foreground color
   const boldFormatting = '\x1b[1m'; // ANSI escape code for bold formatting
   const resetColorAndFormat = '\x1b[0m'; // ANSI escape code to reset color and formatting
   const regex = new RegExp(pattern, 'gi');
