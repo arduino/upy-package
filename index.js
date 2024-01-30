@@ -59,15 +59,18 @@ export async function main() {
     });
 
   program
-    .command('install <package>')
-    .option('--path <target-path>', 'Target path to install the package to')
+    .command('install')
+    .argument('<package-names...>', 'Package names to install')
+    .option('--path <target-path>', 'Target path to install the package(s) to')
     .option('--debug', 'Enable debug output')
-    .description('Install a MicroPython package on a connected Arduino board')
-    .action(async (packageName, options) => {
+    .description('Install MicroPython packages on a connected Arduino board')
+    .action(async (packageNames, options) => {
       const selectedBoard = await boardManager.getBoard(ARDUINO_VID);
       try {
-        console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
-        await packageManager.installPackage(packageName, selectedBoard.ID, options.path);
+        for(const packageName of packageNames) {
+          console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
+          await packageManager.installPackage(packageName, selectedBoard.ID, options.path);
+        }
       } catch (error) {
         console.error(`❌ ${error.message}`);
         if (options.debug) {
