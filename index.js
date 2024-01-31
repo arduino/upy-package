@@ -66,6 +66,11 @@ export async function main() {
     .description('Install MicroPython packages on a connected Arduino board')
     .action(async (packageNames, options) => {
       const selectedBoard = await boardManager.getBoard(ARDUINO_VID);
+      if(!selectedBoard) {
+        console.error(`🤷 No connected Arduino board found. Please connect a board and try again.`);
+        process.exit(1);
+      }
+      
       try {
         for(const packageName of packageNames) {
           console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
