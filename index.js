@@ -5,7 +5,7 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { PackageManager } from './package-manager.js';
+import { PackageManager } from './logic/package-manager.js';
 import { BoardManager } from './logic/board-manager.js';
 import { printPackagesWithHighlights } from './logic/format.js';
 
@@ -71,7 +71,12 @@ export async function main() {
       try {
         for(const packageName of packageNames) {
           console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
-          await packageManager.installPackage(packageName, selectedBoard.ID, options.path);
+          const aPackage = await packageManager.getPackage(packageName);
+          if(!await packageManager.checkRequiredRuntime(aPackage, selectedBoard)){
+            console.error(`🙅 Installation of '${packageName}' aborted.`);
+            continue;
+          }
+          packageManager.installPackage(aPackage, selectedBoard, options.path);
         }
       } catch (error) {
         console.error(`❌ ${error.message}`);
