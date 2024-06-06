@@ -1,5 +1,8 @@
 import yaml from 'js-yaml';
 import { execSync } from 'child_process';
+import { BoardManager } from './board-manager.js';
+import { satisfies, valid } from 'semver';
+import inquirer from 'inquirer';
 
 const registryUrls = [
     // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
@@ -116,15 +119,46 @@ export class PackageManager {
         }
     }
 
-    // Function to install MicroPython packages using mpremote
-    async installPackage(packageName, boardID, targetPath = null) {
-        const packageList = await this.getPackageList();
-        const selectedPackage = packageList.find((pkg) => pkg.name === packageName);
+    async checkRequiredRuntime(selectedPackage, board) {
+        let requiredRuntime = selectedPackage.runtime;
+        requiredRuntime ||= selectedPackage.overrides?.runtime;
+        const boardManager = new BoardManager();
+        const boardRuntime = boardManager.getMicroPythonVersion(board);
         
-        if (!selectedPackage) {
+        if(!valid(boardRuntime)){
+            throw new Error(`Board runtime version ${boardRuntime} is not valid.`);
+        }
+
+        const runsRequiredVersion = satisfies(boardRuntime, requiredRuntime);
+        if (!runsRequiredVersion) {
+            console.warn(`🚨 Package '${selectedPackage.name}' requires a different runtime version (${requiredRuntime}) than the one running on the board (${boardRuntime}).`);
+            // Use inquirer to prompt the user to continue or abort
+            const response = await inquirer.prompt([
+                {
+                    type: 'confirm',
+                    name: 'continue',
+                    message: 'Do you want to continue with the installation?',
+                    default: false,
+                },
+            ]);
+            return response.continue;
+        }
+        return true;
+    }
+
+    async getPackage(packageName) {
+        const packageList = await this.getPackageList();
+        const foundPackage = packageList.find((pkg) => pkg.name === packageName);
+        
+        if (!foundPackage) {
             throw new Error(`Package '${packageName}' not found.`);
         }
-        
+
+        return foundPackage;
+    }
+
+    // Function to install MicroPython packages using mpremote
+    installPackage(selectedPackage, board, targetPath = null) {
         let packageArgument;
         let indexArg = '';
         if(!targetPath) targetPath = DEFAULT_LIB_PATH;
@@ -154,7 +188,7 @@ export class PackageManager {
         }    
 
         const targetPathArg = targetPath ? `--target=${targetPath}` : '';
-        let command = `mpremote connect id:${boardID} mip install ${targetPathArg} ${indexArg} ${packageArgument}`;
+        let command = `mpremote connect id:${board.ID} mip install ${targetPathArg} ${indexArg} ${packageArgument}`;
         // Remove double spaces resulting from empty arguments
         command = command.replace(/\s\s+/g, ' ');
         
