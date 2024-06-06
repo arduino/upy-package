@@ -1,8 +1,15 @@
 import { execSync } from 'child_process';
 import inquirer from 'inquirer';
 
+/**
+ * Class to manage connected boards
+ */
 export class BoardManager {
     
+    /**
+     * Get a list of connected boards. It uses mpremote to get the list.
+     * @returns {Array} List of connected boards in the format {port, ID, vendorID, productID, name}
+     */
     getConnectedBoards() {
         const command = `mpremote connect list`;
 
@@ -24,6 +31,12 @@ export class BoardManager {
         return boardInfo;
     }
     
+    /**
+     * Gets the board based on the vendorID. If no vendorID is provided, it will return the first board found.
+     * If more than one board is found, it will prompt the user to select a board.
+     * @param {string} vendorID 
+     * @returns 
+     */
     async getBoard(vendorID = null) {
         let boards = this.getConnectedBoards()
         
@@ -52,5 +65,10 @@ export class BoardManager {
             },
         ]);
         return selection.selectedPort;
+    }
+
+    getMicroPythonVersion(board) {
+        const command = `mpremote connect id:${board.ID} exec "import os; print(os.uname().release)"`;
+        return execSync(command, { encoding: 'utf-8' }).trim();
     }
 }
