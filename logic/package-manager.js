@@ -84,8 +84,8 @@ export class PackageManager {
         if(packageInfo.tags) {
             info += `\n🔖 [${packageInfo.tags.join(', ')}]`;
         }
-        if(packageInfo.authors) {
-            info += `\n👤 ${packageInfo.authors.join(', ')}`;
+        if(packageInfo.author) {
+            info += `\n👤 ${packageInfo.author}`;
         }
         if(packageInfo.license) {
             info += `\n📜 ${packageInfo.license}`;
@@ -157,8 +157,25 @@ export class PackageManager {
         return foundPackage;
     }
 
+    installPackageFromGithubURL(url, board, targetPath = null) {
+        const repositoryName = this.getRepositoryNameFromURL(url);
+        if (!repositoryName) {
+            throw new Error(`Invalid repository URL '${url}'`);
+        }
+
+        let selectedPackage = {
+            name: repositoryName,
+            url: url
+        };
+        this.installPackage(selectedPackage, board, targetPath);
+    }
+
+
     // Function to install MicroPython packages using mpremote
     installPackage(selectedPackage, board, targetPath = null) {
+        if(!board){
+            throw new Error('No board was selected.');
+        }
         let packageArgument;
         let indexArg = '';
         if(!targetPath) targetPath = DEFAULT_LIB_PATH;
@@ -184,7 +201,7 @@ export class PackageManager {
         }
 
         if (!packageArgument) {
-            throw new Error(`Nothing to install for package '${packageName}'.`);
+            throw new Error(`Nothing to install for package '${selectedPackage.name}'.`);
         }    
 
         const targetPathArg = targetPath ? `--target=${targetPath}` : '';
@@ -195,7 +212,7 @@ export class PackageManager {
         try {
             execSync(command, { stdio: ['ignore', 'inherit', 'pipe'] });
         } catch (error) {
-            let installationError = new Error(`Error installing package ${packageName}.`);
+            let installationError = new Error(`Error installing package ${selectedPackage.name}.`);
 
             if(error.message.includes('Package not found')){
                 installationError.message += " 'package.json' file not found in package repository.";
