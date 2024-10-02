@@ -3,6 +3,7 @@ import { execSync } from 'child_process';
 import { BoardManager } from './board-manager.js';
 import { satisfies, valid } from 'semver';
 import inquirer from 'inquirer';
+import {Packager} from 'upy-packager';
 
 const registryUrls = [
     // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
@@ -13,32 +14,6 @@ const registryUrls = [
 const DEFAULT_LIB_PATH = '/lib';
 
 export class PackageManager {
-    /**
-     * Converts a github URL to a mpremote compatible URL
-     * @param {string} url A Github repository URL such as https://github.com/arduino/arduino-iot-cloud-py
-     * @param {string} branch If specified, the branch to use, e.g. main
-     * @returns The converted URL, e.g. github:arduino/arduino-iot-cloud-py@branch
-     */
-    convertGithubURL(url, branch = null) {
-        if (url.startsWith('github:')) {
-            return url;
-        }
-
-        // Only Github URLs are supported
-        if (!url.includes("github.com")) {
-            return null;
-        }
-
-        const parts = url.split('/');
-        const user = parts[parts.length - 2];
-        const repo = parts[parts.length - 1].split('.')[0];
-
-        let constructedURL = `github:${user}/${repo}`;
-        if (branch) {
-            constructedURL += `@${branch}`;
-        }
-        return constructedURL;
-    }
 
     getRepositoryNameFromURL(url) {
         if (url.startsWith('github:')) {
@@ -122,6 +97,10 @@ export class PackageManager {
     async checkRequiredRuntime(selectedPackage, board) {
         let requiredRuntime = selectedPackage.runtime;
         requiredRuntime ||= selectedPackage.overrides?.runtime;
+        if (!requiredRuntime) {
+            return true;
+        }
+
         const boardManager = new BoardManager();
         const boardRuntime = boardManager.getMicroPythonVersion(board);
         
@@ -172,54 +151,20 @@ export class PackageManager {
 
 
     // Function to install MicroPython packages using mpremote
-    installPackage(selectedPackage, board, targetPath = null) {
+    async installPackage(selectedPackage, board, targetPath = null) {
         if(!board){
             throw new Error('No board was selected.');
         }
-        let packageArgument;
-        let indexArg = '';
-        if(!targetPath) targetPath = DEFAULT_LIB_PATH;
-        
-        if(selectedPackage.index){
-            // Only take last path segment of package URL if it's in an index
-            packageArgument = selectedPackage.url.split('/').pop();
-            indexArg = selectedPackage.index ? `--index ${selectedPackage.index}` : '';
-        } else if(selectedPackage.files){
-            // If the package has files, append them to the URL
-            packageArgument = selectedPackage.files.join(' ');
-            
-            if(selectedPackage.files.length > 1){
-                // If there are multiple files, add the package name to the target path
-                // Infer target path from repository name
-                // This will serve as the package name used for import after installation
-                const repoName = this.getRepositoryNameFromURL(selectedPackage.url);
-                let normalizedRepoName = this.normalizeRepositoryName(repoName);
-                targetPath = `${targetPath}/${normalizedRepoName}`;
-            }
-        } else {
-            packageArgument = this.convertGithubURL(selectedPackage.url);
-        }
 
-        if (!packageArgument) {
-            throw new Error(`Nothing to install for package '${selectedPackage.name}'.`);
-        }    
-
-        const targetPathArg = targetPath ? `--target=${targetPath}` : '';
-        let command = `mpremote connect id:${board.ID} mip install ${targetPathArg} ${indexArg} ${packageArgument}`;
-        // Remove double spaces resulting from empty arguments
-        command = command.replace(/\s\s+/g, ' ');
-        
+        // TODO add support for specifying index
+        // TODO remove full url for official packages, maybe add a source field in the package list?
+        // TODO add support for package.json overrides
+        const packager = new Packager(board.port);
         try {
-            execSync(command, { stdio: ['ignore', 'inherit', 'pipe'] });
+          await packager.packageAndInstall(selectedPackage.url);
+          console.debug('✅ Done');
         } catch (error) {
-            let installationError = new Error(`Error installing package ${selectedPackage.name}.`);
-
-            if(error.message.includes('Package not found')){
-                installationError.message += " 'package.json' file not found in package repository.";
-            }
-
-            installationError.stack = error.message;
-            throw installationError;
+          console.error(`❌ ${error.message}`);
         }
     }
 }

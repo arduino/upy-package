@@ -1,9 +1,2 @@
-- Consider using mpy cross to cross compile the libraries before uploading.
-    - Get uPy release:
-        sys.implementation.version
-        os.uname().release
-    - Get uPy version ("language"):
-        sys.implementation._mpy & 0xFF (from here: https://github.com/micropython/micropython/blob/master/tools/mpremote/mpremote/mip.py#L141)
-- Package mpremote as binary.
 - Think about name clashes in multiple package indices.
 - Host index on CDN (setup cronjob in github actions?)
