@@ -52,10 +52,6 @@ export class PackageManager {
         if (!packageInfo) return null;
         let info = `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}`;
 
-        if(packageInfo.description) {
-            info += `\n📝 ${packageInfo.description}`;
-        }
-
         if(packageInfo.tags) {
             info += `\n🔖 [${packageInfo.tags.join(', ')}]`;
         }
@@ -64,6 +60,10 @@ export class PackageManager {
         }
         if(packageInfo.license) {
             info += `\n📜 ${packageInfo.license}`;
+        }
+
+        if(packageInfo.description) {
+            info += `\n\n${packageInfo.description}`;
         }
         return info;
     }
