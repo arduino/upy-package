@@ -6,7 +6,7 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { PackageManager } from './logic/package-manager.js';
-import { BoardManager } from './logic/board-manager.js';
+import { BoardManager } from './logic/board/board-manager.js';
 import { printPackagesWithHighlights } from './logic/format.js';
 
 
@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Extract the command version from the package.json file
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'))).version;
-const ARDUINO_VID = '0x2341';
+const ARDUINO_VID = 0x2341;
 
 const packageManager = new PackageManager();
 const boardManager = new BoardManager();
@@ -70,7 +70,7 @@ export async function main() {
       
       try {
         for(const packageName of packageNames) {
-          console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (ID: ${selectedBoard.ID})`);
+          console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
           const aPackage = await packageManager.getPackage(packageName);
           if(!await packageManager.checkRequiredRuntime(aPackage, selectedBoard)){
             console.error(`🙅 Installation of '${packageName}' aborted.`);

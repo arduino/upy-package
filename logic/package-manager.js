@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import { execSync } from 'child_process';
-import { BoardManager } from './board-manager.js';
+import { BoardManager } from './board/board-manager.js';
 import { satisfies, valid } from 'semver';
 import inquirer from 'inquirer';
 import {Packager} from 'upy-packager';
@@ -159,7 +159,7 @@ export class PackageManager {
         // TODO add support for specifying index
         // TODO remove full url for official packages, maybe add a source field in the package list?
         // TODO add support for package.json overrides
-        const packager = new Packager(board.port);
+        const packager = new Packager(board.serialPort);
         try {
           await packager.packageAndInstall(selectedPackage.url);
           console.debug('✅ Done');
