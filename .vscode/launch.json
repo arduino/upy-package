@@ -11,12 +11,14 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/index.js",
+            "program": "${workspaceFolder}/main.js",
             // "args": ["install", "--path", "/flash/lib", "arduino-iot-cloud-py"] // Test target path
             // "args": ["install", "ssd1306"] // Test library from official index
             // "args": ["install", "micropython-my9221"] // Test library with file override
-            // "args": ["install", "micropython-i2c-lcd"] // Test library from custom index
             // "args": ["install", "random-name"] // Test non-existing library
+            // "args": ["install", "github:arduino/arduino-modulino-mpy"] // Test github: URL
+            // "args": ["install", "arduino-iot-cloud-py"] // Test regular library
+            "args": ["install", "micropython-my9221"] // Test library with custom package.json
 
             // "args": ["list", "micropython-rotary"]
             // "args": ["find", "cloud"]
