@@ -23,7 +23,6 @@ upy-package [options] [command]
 - `info <package>`: Retrieves detailed information about a specific package.
 - `find <pattern>`: Searches for packages using the supplied pattern.
 - `install [options] <package-names...>`: Installs MicroPython packages onto a connected Arduino board. When installing multiple packages, they should be separated by a space.
-    - `--path <target-path>`: Target path to install the package(s) to
     - `--debug`: Enable debug output
 - `help [command]`: Displays help information for a specific command.
 

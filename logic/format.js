@@ -1,3 +1,9 @@
+/**
+ * Highlight the pattern in the given text. The pattern is case-insensitive.
+ * @param {string} text The text to highlight the pattern in
+ * @param {string} pattern The pattern to highlight
+ * @returns {string} The text with the pattern highlighted
+ */
 export function highlightPattern(text, pattern) {
     const highlightColor = '\x1b[38;2;82;140;227m'; // ANSI escape code for a bright red foreground color
     const boldFormatting = '\x1b[1m'; // ANSI escape code for bold formatting
@@ -6,6 +12,13 @@ export function highlightPattern(text, pattern) {
     return text.replace(regex, match => `${boldFormatting}${highlightColor}${match}${resetColorAndFormat}`);
 }
 
+/**
+ * Truncate the description around the pattern to a maximum length.
+ * @param {string} description The description to truncate
+ * @param {string} pattern The pattern to truncate around
+ * @param {number} maxLength The maximum length of the truncated description
+ * @returns {string} The truncated description
+ */
 export function truncateDescription(description, pattern, maxLength = 80) {
     const patternIndex = description.toLowerCase().indexOf(pattern.toLowerCase());
     const patternLength = pattern.length;
@@ -22,6 +35,11 @@ export function truncateDescription(description, pattern, maxLength = 80) {
     return truncatedDescription;
 }
 
+/**
+ * Print the packages with highlights for the matching pattern.
+ * @param {Array<Package>} packages The list of packages to print
+ * @param {string} pattern The pattern to highlight
+ */
 export function printPackagesWithHighlights(packages, pattern) {
     if (packages && packages.length > 0) {
         for (const [index, pkg] of packages.entries()) {
