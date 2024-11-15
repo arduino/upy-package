@@ -67,7 +67,7 @@ const searchPackages = (directory, outputFilename, indexUrl) => {
         if (isPackageJson || isManifestPy) {
           const packageInfo = {
             name: path.basename(dir),
-            url: constructGitHubUrl(gitHubUrl, currentBranch, repositoryRoot, dir),
+            docs: constructGitHubUrl(gitHubUrl, currentBranch, repositoryRoot, dir),
             index: indexUrl,
           };
 
