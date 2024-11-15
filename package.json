@@ -22,6 +22,6 @@
     "js-yaml": "^4.1.0",
     "semver": "^7.6.2",
     "serialport": "^12.0.0",
-    "upy-packager": "file:../upy-packager"
+    "upy-packager": "github:sebromero/upy-packager"
   }
 }
