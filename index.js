@@ -1,4 +1,4 @@
 import { PackageManager } from './logic/package-manager.js';
-import { BoardManager } from './logic/board-manager.js';
+import { DeviceManager } from './logic/board/device-manager.js';
 
-export { PackageManager, BoardManager };
+export { PackageManager, DeviceManager };
