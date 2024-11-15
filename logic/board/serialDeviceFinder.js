@@ -14,7 +14,7 @@ export class SerialDevice {
     }
 
     toString() {
-        return `${this.manufacturer} ${this.name}`;
+        return `${this.manufacturer} ${this.name} at ${this.serialPort}`;
     }
 }
 
