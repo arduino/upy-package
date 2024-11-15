@@ -4,9 +4,8 @@ import {Packager} from 'upy-packager';
 import { SerialDevice } from './board/serialDeviceFinder.js';
 
 const registryUrls = [
-    // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
-    'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/package-list.yaml',
-    'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
+    'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
+    'https://raw.githubusercontent.com/arduino/package-index-py/main/micropython-lib.yaml'
 ];
 
 export class Package {

@@ -61,6 +61,8 @@ async function installPackage(packageName, selectedBoard) {
         console.error(`🙅 Installation of '${packageName}' skipped.`);
         return;
       }
+    } else {
+      console.log(`👌 Board runtime version ${boardRuntime} is compatible with the package requirements.`);
     }
   }
   await packageManager.installPackage(aPackage, selectedBoard);
