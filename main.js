@@ -10,7 +10,6 @@ import { DeviceManager } from './logic/board/device-manager.js';
 import { printPackagesWithHighlights } from './logic/format.js';
 import { isCustomPackage } from 'upy-packager';
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Extract the command version from the package.json file
@@ -74,7 +73,7 @@ export async function main() {
           console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
          
           if(isCustomPackage(packageName)) {
-            packageManager.installPackage(packageName, selectedBoard);
+            await packageManager.installPackage(packageName, selectedBoard);
             continue;
           }
 
@@ -88,8 +87,9 @@ export async function main() {
           // Official micropython-lib packages don't have a URL field in the registry,
           // so they are installed by supplying the name as the URL
           const packageURL = aPackage.url ? aPackage.url : aPackage.name;
-          packageManager.installPackage(packageURL, selectedBoard);
+          await packageManager.installPackage(packageURL, selectedBoard);
         }
+        console.log(`✅ Installation complete`);
       } catch (error) {
         console.error(`❌ ${error.message}`);
         if (options.debug) {

@@ -128,11 +128,7 @@ export class PackageManager {
         // TODO remove full url for official packages, maybe add a source field in the package list?
         // TODO add support for package.json overrides
         const packager = new Packager(board.serialPort);
-        try {
-          await packager.packageAndInstall(packageURL);
-          console.debug('✅ Done');
-        } catch (error) {
-          console.error(`❌ ${error.message}`);
-        }
+        await packager.packageAndInstall(packageURL);
+        console.debug(`✅ Package installed: ${packageURL}`);
     }
 }
