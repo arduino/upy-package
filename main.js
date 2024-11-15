@@ -6,8 +6,9 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { PackageManager } from './logic/package-manager.js';
-import { BoardManager } from './logic/board/board-manager.js';
+import { DeviceManager } from './logic/board/device-manager.js';
 import { printPackagesWithHighlights } from './logic/format.js';
+import { isCustomPackage } from 'upy-packager';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +18,7 @@ const version = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'))
 const ARDUINO_VID = 0x2341;
 
 const packageManager = new PackageManager();
-const boardManager = new BoardManager();
+const boardManager = new DeviceManager();
 
 // Main function to handle the command-line interface
 export async function main() {
@@ -58,11 +59,11 @@ export async function main() {
   program
     .command('install')
     .argument('<package-names...>', 'Package names to install')
-    .option('--path <target-path>', 'Target path to install the package(s) to')
+    // .option('--path <target-path>', 'Target path to install the package(s) to')
     .option('--debug', 'Enable debug output')
     .description('Install MicroPython packages on a connected Arduino board')
     .action(async (packageNames, options) => {
-      const selectedBoard = await boardManager.getBoard(ARDUINO_VID);
+      const selectedBoard = await boardManager.getDevice(ARDUINO_VID);
       if(!selectedBoard) {
         console.error(`🤷 No connected Arduino board found. Please connect a board and try again.`);
         process.exit(1);
@@ -71,12 +72,23 @@ export async function main() {
       try {
         for(const packageName of packageNames) {
           console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
-          const aPackage = await packageManager.getPackage(packageName);
-          if(!await packageManager.checkRequiredRuntime(aPackage, selectedBoard)){
-            console.error(`🙅 Installation of '${packageName}' aborted.`);
+         
+          if(isCustomPackage(packageName)) {
+            packageManager.installPackage(packageName, selectedBoard);
             continue;
           }
-          packageManager.installPackage(aPackage, selectedBoard, options.path);
+
+          const aPackage = await packageManager.getPackage(packageName);
+          
+          if(aPackage && !await packageManager.checkRequiredRuntime(aPackage, selectedBoard)){
+            console.error(`🙅 Installation of '${packageName}' skipped. Unsupported runtime installed.`);
+            continue;
+          }
+
+          // Official micropython-lib packages don't have a URL field in the registry,
+          // so they are installed by supplying the name as the URL
+          const packageURL = aPackage.url ? aPackage.url : aPackage.name;
+          packageManager.installPackage(packageURL, selectedBoard);
         }
       } catch (error) {
         console.error(`❌ ${error.message}`);

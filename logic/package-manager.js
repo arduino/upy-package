@@ -1,6 +1,5 @@
 import yaml from 'js-yaml';
-import { execSync } from 'child_process';
-import { BoardManager } from './board/board-manager.js';
+import { DeviceManager } from './board/device-manager.js';
 import { satisfies, valid } from 'semver';
 import inquirer from 'inquirer';
 import {Packager} from 'upy-packager';
@@ -94,15 +93,15 @@ export class PackageManager {
         }
     }
 
-    async checkRequiredRuntime(selectedPackage, board) {
+    async checkRequiredRuntime(selectedPackage, device) {
         let requiredRuntime = selectedPackage.runtime;
         requiredRuntime ||= selectedPackage.overrides?.runtime;
         if (!requiredRuntime) {
             return true;
         }
 
-        const boardManager = new BoardManager();
-        const boardRuntime = boardManager.getMicroPythonVersion(board);
+        const deviceManager = new DeviceManager();
+        const boardRuntime = await deviceManager.getMicroPythonVersion(device);
         
         if(!valid(boardRuntime)){
             throw new Error(`Board runtime version ${boardRuntime} is not valid.`);
@@ -136,7 +135,7 @@ export class PackageManager {
         return foundPackage;
     }
 
-    installPackageFromGithubURL(url, board, targetPath = null) {
+    installPackageFromGithubURL(url, board) {
         const repositoryName = this.getRepositoryNameFromURL(url);
         if (!repositoryName) {
             throw new Error(`Invalid repository URL '${url}'`);
@@ -146,12 +145,12 @@ export class PackageManager {
             name: repositoryName,
             url: url
         };
-        this.installPackage(selectedPackage, board, targetPath);
+        this.installPackage(selectedPackage, board);
     }
 
 
     // Function to install MicroPython packages using mpremote
-    async installPackage(selectedPackage, board, targetPath = null) {
+    async installPackage(packageURL, board) {
         if(!board){
             throw new Error('No board was selected.');
         }
@@ -161,7 +160,7 @@ export class PackageManager {
         // TODO add support for package.json overrides
         const packager = new Packager(board.serialPort);
         try {
-          await packager.packageAndInstall(selectedPackage.url);
+          await packager.packageAndInstall(packageURL);
           console.debug('✅ Done');
         } catch (error) {
           console.error(`❌ ${error.message}`);
