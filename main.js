@@ -20,6 +20,52 @@ const ARDUINO_VID = 0x2341;
 const packageManager = new PackageManager();
 const deviceManager = new DeviceManager();
 
+/**
+ * Prompt the user to select a board from the list of connected devices.
+ * @returns {Promise<SerialDevice>} The selected board
+ */
+async function promptForBoard(boards) {
+  const boardOptions = boards.map((board) => {
+    return { "name": `${board.manufacturer} ${board.name} at ${board.serialPort}`, "value": board };
+  });
+
+  const selection = await inquirer.prompt([
+    { type: 'list', name: 'selectedPort', message: 'Please select the desired board:', choices: boardOptions }
+  ]);
+  const selectedPort = selection.selectedPort; // Use port as unique identifier
+  return boards.find(board => board.serialPort === selectedPort);
+}
+
+async function installPackage(packageName, selectedBoard) {
+  console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
+
+  // If it's a package with a custom URL, install it directly
+  if (isCustomPackage(packageName)) {
+    await packageManager.installPackageFromURL(packageName, selectedBoard);
+    return;
+  }
+
+  const aPackage = await packageManager.getPackage(packageName);
+
+  if (aPackage.required_runtime) {
+    const boardRuntime = await deviceManager.getMicroPythonVersion(selectedBoard);
+    const matchesRequirement = await packageManager.matchesRequiredRuntime(aPackage, boardRuntime);
+
+    if (!matchesRequirement) {
+      console.warn(`🚨 Package '${aPackage.name}' requires a different runtime version (${aPackage.required_runtime}) than the one running on the board (${boardRuntime}).`);
+      const response = await inquirer.prompt([
+        { type: 'confirm', name: 'continue', message: 'Do you want to continue with the installation?', default: false }
+      ]);
+
+      if (!response.continue) {
+        console.error(`🙅 Installation of '${packageName}' skipped.`);
+        return;
+      }
+    }
+  }
+  await packageManager.installPackage(aPackage, selectedBoard);
+}
+
 // Main function to handle the command-line interface
 export async function main() {
   program
@@ -65,42 +111,21 @@ export async function main() {
     .option('--debug', 'Enable debug output')
     .description('Install MicroPython packages on a connected Arduino board')
     .action(async (packageNames, options) => {
-      const selectedBoard = await deviceManager.getDevice(ARDUINO_VID);
-      if(!selectedBoard) {
+      const connectedDevices = await deviceManager.getConnectedDevices(ARDUINO_VID);
+      let selectedBoard;
+
+      if(connectedDevices.length === 0) {
         console.error(`🤷 No connected Arduino board found. Please connect a board and try again.`);
         process.exit(1);
+      } else if(connectedDevices.length === 1) {
+        selectedBoard = connectedDevices[0];
+      } else {
+        selectedBoard = await promptForBoard(connectedDevices);
       }
-      
+
       try {
         for(const packageName of packageNames) {
-          console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
-         
-          if(isCustomPackage(packageName)) {
-            await packageManager.installPackageFromURL(packageName, selectedBoard);
-            continue;
-          }
-
-          const aPackage = await packageManager.getPackage(packageName);
-
-          if(aPackage.required_runtime){
-            const boardRuntime = await deviceManager.getMicroPythonVersion(selectedBoard);
-            const matchesRequirement = await packageManager.matchesRequiredRuntime(aPackage, boardRuntime);
-
-            if(!matchesRequirement) {
-              console.warn(`🚨 Package '${aPackage.name}' requires a different runtime version (${aPackage.required_runtime}) than the one running on the board (${boardRuntime}).`);
-              const response = await inquirer.prompt([
-                  { type: 'confirm', name: 'continue', message: 'Do you want to continue with the installation?', default: false }
-              ]);
-              
-              if(!response.continue){
-                console.error(`🙅 Installation of '${packageName}' skipped.`);
-                continue;
-              }
-            }
-          }
-
-
-          await packageManager.installPackage(aPackage, selectedBoard);
+          await installPackage(packageName, selectedBoard);
         }
         console.log(`✅ Done.`);
       } catch (error) {

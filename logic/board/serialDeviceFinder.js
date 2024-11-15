@@ -1,5 +1,8 @@
 import { SerialPort } from 'serialport'
 
+/**
+ * Class to represent a serial device
+ */
 export class SerialDevice {
     constructor(vendorID, productID, serialPort = null, serialNumber = null) {
         this.vendorID = vendorID;
@@ -9,10 +12,23 @@ export class SerialDevice {
         this.manufacturer = null;
         this.name = null;
     }
+
+    toString() {
+        return `${this.manufacturer} ${this.name}`;
+    }
 }
 
+/**
+ * Class to find connected serial devices
+ */
 export class SerialDeviceFinder {
 
+    /**
+     * Get a list of connected devices. Optionally filter by vendorID and productID.
+     * @param {number} vendorIDFilter The vendor ID to filter by
+     * @param {number} productIDFilter The product ID to filter by
+     * @returns {Promise<Array<SerialDevice>>} List of connected devices as SerialDevice objects.
+     */
     async getDeviceList(vendorIDFilter = null, productIDFilter = null) {
         let devices = [];
         const ports = await SerialPort.list();
