@@ -10,23 +10,7 @@ const registryUrls = [
     'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
 ];
 
-const DEFAULT_LIB_PATH = '/lib';
-
 export class PackageManager {
-
-    getRepositoryNameFromURL(url) {
-        if (url.startsWith('github:')) {
-            return url.split(':')[1].split('@')[0];
-        } else if (url.startsWith('http')) {
-            return url.split('/')[4].split('.')[0];
-        }
-        return null;
-    }
-
-    normalizeRepositoryName(name) {
-        // Replace characters so that it results in a valid Python package name
-        return name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-    }
 
     // Function to fetch and parse the package list from a given registry URL
     async getPackageList() {
@@ -135,27 +119,12 @@ export class PackageManager {
         return foundPackage;
     }
 
-    installPackageFromGithubURL(url, board) {
-        const repositoryName = this.getRepositoryNameFromURL(url);
-        if (!repositoryName) {
-            throw new Error(`Invalid repository URL '${url}'`);
-        }
-
-        let selectedPackage = {
-            name: repositoryName,
-            url: url
-        };
-        this.installPackage(selectedPackage, board);
-    }
-
-
     // Function to install MicroPython packages using mpremote
     async installPackage(packageURL, board) {
         if(!board){
             throw new Error('No board was selected.');
         }
 
-        // TODO add support for specifying index
         // TODO remove full url for official packages, maybe add a source field in the package list?
         // TODO add support for package.json overrides
         const packager = new Packager(board.serialPort);
