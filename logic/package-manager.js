@@ -6,7 +6,7 @@ import {Packager} from 'upy-packager';
 
 const registryUrls = [
     // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
-    'https://raw.githubusercontent.com/arduino/package-index-py/file-override/package-list.yaml',
+    'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/package-list.yaml',
     'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
 ];
 
@@ -119,16 +119,19 @@ export class PackageManager {
         return foundPackage;
     }
 
-    // Function to install MicroPython packages using mpremote
-    async installPackage(packageURL, board) {
+    // Function to install MicroPython packages
+    async installPackage(aPackage, board) {
         if(!board){
             throw new Error('No board was selected.');
         }
 
-        // TODO remove full url for official packages, maybe add a source field in the package list?
-        // TODO add support for package.json overrides
+        // Official micropython-lib packages don't have a URL field in the registry,
+        // so they are installed by supplying the name as the URL
+        const packageURL = aPackage.url ? aPackage.url : aPackage.name;
+        const customPackageJson = aPackage.package_descriptor;
+
         const packager = new Packager(board.serialPort);
-        await packager.packageAndInstall(packageURL);
+        await packager.packageAndInstall(packageURL, null, customPackageJson);
         console.debug(`✅ Package installed: ${packageURL}`);
     }
 }

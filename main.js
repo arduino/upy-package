@@ -84,10 +84,7 @@ export async function main() {
             continue;
           }
 
-          // Official micropython-lib packages don't have a URL field in the registry,
-          // so they are installed by supplying the name as the URL
-          const packageURL = aPackage.url ? aPackage.url : aPackage.name;
-          await packageManager.installPackage(packageURL, selectedBoard);
+          await packageManager.installPackage(aPackage, selectedBoard);
         }
         console.log(`✅ Installation complete`);
       } catch (error) {
