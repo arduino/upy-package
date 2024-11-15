@@ -1,8 +1,7 @@
 import yaml from 'js-yaml';
-import { DeviceManager } from './board/device-manager.js';
 import { satisfies, valid } from 'semver';
-import inquirer from 'inquirer';
 import {Packager} from 'upy-packager';
+import { SerialDevice } from './board/serialDeviceFinder.js';
 
 const registryUrls = [
     // 'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
@@ -10,9 +9,48 @@ const registryUrls = [
     'https://raw.githubusercontent.com/arduino/package-index-py/micropython-lib/micropython-lib.yaml'
 ];
 
+export class Package {
+
+    static fromObject(obj) {
+        const aPackage = new Package();
+        Object.assign(aPackage, obj);
+        return aPackage;
+    }
+
+    toString() {
+        let info = `📦 ${this.name}`;
+
+        if(this.url) {
+            info += `\n🔗 ${this.url}`;
+        }
+
+        if(this.docs) {
+            info += `\n📚 ${this.docs}`
+        };
+
+        if(this.tags) {
+            info += `\n🔖 [${this.tags.join(', ')}]`;
+        }
+        if(this.author) {
+            info += `\n👤 ${this.author}`;
+        }
+        if(this.license) {
+            info += `\n📜 ${this.license}`;
+        }
+
+        if(this.description) {
+            info += `\n\n${this.description}`;
+        }
+        return info;
+    }
+}
+
 export class PackageManager {
 
-    // Function to fetch and parse the package list from a given registry URL
+    /**
+     * Function to fetch and parse the package list from given registry URLs.
+     * @returns {Promise<Array<Package>} List of available packages.
+     */
     async getPackageList() {
         let packages = [];
 
@@ -26,38 +64,15 @@ export class PackageManager {
                 process.exit(1);
             }
         }
+        packages = packages.map(Package.fromObject);
         return packages;
     }
 
-    async getPackageInfo(packageName) {
-        const packageList = await this.getPackageList();
-        let packageInfo = packageList.find((pkg) => pkg.name === packageName);
-        if (!packageInfo) return null;
-        let info = `📦 ${packageInfo.name}\n🔗 ${packageInfo.url}`;
-
-        if(packageInfo.tags) {
-            info += `\n🔖 [${packageInfo.tags.join(', ')}]`;
-        }
-        if(packageInfo.author) {
-            info += `\n👤 ${packageInfo.author}`;
-        }
-        if(packageInfo.license) {
-            info += `\n📜 ${packageInfo.license}`;
-        }
-
-        if(packageInfo.description) {
-            info += `\n\n${packageInfo.description}`;
-        }
-        return info;
-    }
-
-    // Function to list packages from a given registry URL
-    async listPackages() {
-        const packageList = await this.getPackageList();
-        return packageList ? packageList.map((pkg) => `📦 ${pkg.name}`).join('\n') : null;
-    }
-
-    // Function to find a package matching the supplied pattern
+    /**
+     * Function to find a package matching the supplied pattern
+     * @param {string} pattern 
+     * @returns {Promise<Array<Package>>} List of packages matching the pattern
+     */
     async findPackages(pattern) {
         const packageList = await this.getPackageList();
         if (packageList) {
@@ -77,37 +92,30 @@ export class PackageManager {
         }
     }
 
-    async checkRequiredRuntime(selectedPackage, device) {
-        let requiredRuntime = selectedPackage.runtime;
-        requiredRuntime ||= selectedPackage.overrides?.runtime;
+    /**
+     * Checks if the selected package requires a runtime version that is supported by the device.
+     * @param {Package} selectedPackage The package to be installed
+     * @param {string} deviceRuntime The runtime version of the device as a string (e.g. '1.0.0')
+     * @returns {Promise<boolean>} A promise that resolves to true if the device runtime version satisfies the package requirements
+     */
+    async matchesRequiredRuntime(selectedPackage, deviceRuntime) {
+        let requiredRuntime = selectedPackage.required_runtime;
         if (!requiredRuntime) {
             return true;
         }
 
-        const deviceManager = new DeviceManager();
-        const boardRuntime = await deviceManager.getMicroPythonVersion(device);
-        
-        if(!valid(boardRuntime)){
+        if(!valid(deviceRuntime)){
             throw new Error(`Board runtime version ${boardRuntime} is not valid.`);
         }
 
-        const runsRequiredVersion = satisfies(boardRuntime, requiredRuntime);
-        if (!runsRequiredVersion) {
-            console.warn(`🚨 Package '${selectedPackage.name}' requires a different runtime version (${requiredRuntime}) than the one running on the board (${boardRuntime}).`);
-            // Use inquirer to prompt the user to continue or abort
-            const response = await inquirer.prompt([
-                {
-                    type: 'confirm',
-                    name: 'continue',
-                    message: 'Do you want to continue with the installation?',
-                    default: false,
-                },
-            ]);
-            return response.continue;
-        }
-        return true;
+        return satisfies(deviceRuntime, requiredRuntime);
     }
 
+    /**
+     * Get a package by name
+     * @param {string} packageName
+     * @returns {Promise<Package>} The package with the given name
+     */
     async getPackage(packageName) {
         const packageList = await this.getPackageList();
         const foundPackage = packageList.find((pkg) => pkg.name === packageName);
@@ -119,9 +127,22 @@ export class PackageManager {
         return foundPackage;
     }
 
-    // Function to install MicroPython packages
-    async installPackage(aPackage, board) {
-        if(!board){
+    /**
+     * Function to install a package from a URL
+     * @param {string} packageURL The URL of the package to install.
+     * @param {SerialDevice} device The board to install the package on.
+     */
+    async installPackageFromURL(packageURL, device) {
+        await this.installPackage({ "url" : packageURL }, device);
+    }
+
+    /**
+     * Function to install a package on a board from a package object
+     * @param {Package} aPackage The package to install.
+     * @param {SerialDevice} device The board to install the package on.
+     */
+    async installPackage(aPackage, device) {
+        if(!device){
             throw new Error('No board was selected.');
         }
 
@@ -130,7 +151,7 @@ export class PackageManager {
         const packageURL = aPackage.url ? aPackage.url : aPackage.name;
         const customPackageJson = aPackage.package_descriptor;
 
-        const packager = new Packager(board.serialPort);
+        const packager = new Packager(device.serialPort);
         await packager.packageAndInstall(packageURL, null, customPackageJson);
         console.debug(`✅ Package installed: ${packageURL}`);
     }

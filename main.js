@@ -9,6 +9,7 @@ import { PackageManager } from './logic/package-manager.js';
 import { DeviceManager } from './logic/board/device-manager.js';
 import { printPackagesWithHighlights } from './logic/format.js';
 import { isCustomPackage } from 'upy-packager';
+import inquirer from 'inquirer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,7 +18,7 @@ const version = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'))
 const ARDUINO_VID = 0x2341;
 
 const packageManager = new PackageManager();
-const boardManager = new DeviceManager();
+const deviceManager = new DeviceManager();
 
 // Main function to handle the command-line interface
 export async function main() {
@@ -29,7 +30,9 @@ export async function main() {
     .command('list')
     .description('List packages from registries')
     .action(async () => {
-      const packages = await packageManager.listPackages();
+      const packageList = await packageManager.getPackageList();
+      const packages = packageList ? packageList.map((pkg) => `📦 ${pkg.name}`).join('\n') : null;
+
       if (packages) {
         console.log(packages);
       }
@@ -39,7 +42,7 @@ export async function main() {
     .command('info <package>')
     .description('Get information about a package')
     .action(async (packageName) => {
-      const packageInfo = await packageManager.getPackageInfo(packageName);
+      const packageInfo = (await packageManager.getPackage(packageName)).toString();
       if (packageInfo) {
         console.log(packageInfo);
       } else {
@@ -62,7 +65,7 @@ export async function main() {
     .option('--debug', 'Enable debug output')
     .description('Install MicroPython packages on a connected Arduino board')
     .action(async (packageNames, options) => {
-      const selectedBoard = await boardManager.getDevice(ARDUINO_VID);
+      const selectedBoard = await deviceManager.getDevice(ARDUINO_VID);
       if(!selectedBoard) {
         console.error(`🤷 No connected Arduino board found. Please connect a board and try again.`);
         process.exit(1);
@@ -73,20 +76,33 @@ export async function main() {
           console.log(`📦 Installing ${packageName} on '${selectedBoard.name}' (SN: ${selectedBoard.serialNumber})`);
          
           if(isCustomPackage(packageName)) {
-            await packageManager.installPackage(packageName, selectedBoard);
+            await packageManager.installPackageFromURL(packageName, selectedBoard);
             continue;
           }
 
           const aPackage = await packageManager.getPackage(packageName);
-          
-          if(aPackage && !await packageManager.checkRequiredRuntime(aPackage, selectedBoard)){
-            console.error(`🙅 Installation of '${packageName}' skipped. Unsupported runtime installed.`);
-            continue;
+
+          if(aPackage.required_runtime){
+            const boardRuntime = await deviceManager.getMicroPythonVersion(selectedBoard);
+            const matchesRequirement = await packageManager.matchesRequiredRuntime(aPackage, boardRuntime);
+
+            if(!matchesRequirement) {
+              console.warn(`🚨 Package '${aPackage.name}' requires a different runtime version (${aPackage.required_runtime}) than the one running on the board (${boardRuntime}).`);
+              const response = await inquirer.prompt([
+                  { type: 'confirm', name: 'continue', message: 'Do you want to continue with the installation?', default: false }
+              ]);
+              
+              if(!response.continue){
+                console.error(`🙅 Installation of '${packageName}' skipped.`);
+                continue;
+              }
+            }
           }
+
 
           await packageManager.installPackage(aPackage, selectedBoard);
         }
-        console.log(`✅ Installation complete`);
+        console.log(`✅ Done.`);
       } catch (error) {
         console.error(`❌ ${error.message}`);
         if (options.debug) {
