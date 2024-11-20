@@ -47,6 +47,18 @@ export class Package {
 export class PackageManager {
 
     /**
+     * Constructor for the PackageManager class.
+     * @param {boolean} compileFiles Whether to compile the files before packaging.
+     * Defaults to true.
+     * If set to false, the files will be packaged as they are.
+     * This parameter is optional.
+     * @returns {PackageManager} A new instance of the PackageManager class.
+     */
+    constructor(compileFiles = true) {
+        this.compileFiles = compileFiles;
+    }
+
+    /**
      * Function to fetch and parse the package list from given registry URLs.
      * @returns {Promise<Array<Package>} List of available packages.
      */
@@ -150,7 +162,7 @@ export class PackageManager {
         const packageURL = aPackage.url ? aPackage.url : aPackage.name;
         const customPackageJson = aPackage.package_descriptor;
 
-        const packager = new Packager(device.serialPort);
+        const packager = new Packager(device.serialPort, this.compileFiles);
         await packager.packageAndInstall(packageURL, null, customPackageJson);
         console.debug(`✅ Package installed: ${packageURL}`);
     }
