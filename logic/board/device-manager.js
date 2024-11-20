@@ -38,6 +38,17 @@ export class DeviceManager {
     }
 
     /**
+     * Gets the board with the given serial port.
+     * There can never be more than one board with the same serial port.
+     * @param {string} serialPort The serial port to get the board for
+     * @returns {Promise<SerialDevice>} The board with the given serial port
+     */
+    async getConnectedBoardByPort(serialPort) {
+        const devices = await this.getConnectedDevices();
+        return devices.find((device) => device.serialPort === serialPort);
+    }
+
+    /**
      * Get the MicroPython version running on the board
      * @param {SerialDevice} serialDevice The board to get the version from
      * @returns {Promise<string>} The MicroPython version as a string (e.g. '1.0.0')
