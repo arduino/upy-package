@@ -48,7 +48,14 @@ export class SerialDeviceFinder {
             if(port.serialNumber?.includes('&')){
                 serialNumber = null;
             }
-            const newDevice = new SerialDevice(vendorID, productID, port.path, serialNumber);
+
+            let portPath = port.path;
+            // On macOS use the cu port instead of the tty port for better stability.
+            if(process.platform === 'darwin' && portPath.includes('/tty.')){
+                portPath = portPath.replace('/tty.', '/cu.');
+            }
+
+            const newDevice = new SerialDevice(vendorID, productID, portPath, serialNumber);
             devices.push(newDevice);
         }
         return devices;
