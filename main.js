@@ -78,11 +78,17 @@ export async function main() {
     .command('list')
     .description('List packages from registries')
     .action(async () => {
-      const packageList = await packageManager.getPackageList();
-      const packages = packageList ? packageList.map((pkg) => `📦 ${pkg.name}`).join('\n') : null;
-
-      if (packages) {
-        console.log(packages);
+      try {
+        const packageList = await packageManager.getPackageList();
+        const packages = packageList ? packageList.map((pkg) => `📦 ${pkg.name}`).join('\n') : null;  
+        if (packages && packages.length > 0) {
+          console.log(packages);
+        } else {
+          console.log("🤷 No packages found.")
+        }
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
       }
     });
 
