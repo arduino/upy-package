@@ -52,10 +52,13 @@ export class PackageManager {
      * Defaults to true.
      * If set to false, the files will be packaged as they are.
      * This parameter is optional.
+     * @param {boolean} overwriteExisting Whether to overwrite existing files on the board. Defaults to true.
+     * When set to true, an existing package folder with the same name will be deleted before installing the new package.
      * @returns {PackageManager} A new instance of the PackageManager class.
      */
-    constructor(compileFiles = true) {
+    constructor(compileFiles = true, overwriteExisting = true) {
         this.compileFiles = compileFiles;
+        this.overwriteExisting = overwriteExisting;
     }
 
     /**
@@ -71,8 +74,7 @@ export class PackageManager {
                 const data = await response.text();
                 packages = packages.concat(yaml.load(data).packages);
             } catch (error) {
-                console.error(`Error fetching package list from ${registryUrl}:`, error.message);
-                process.exit(1);
+                throw new Error(`Error fetching package list from ${registryUrl}: ${error.message}`);
             }
         }
         packages = packages.map(Package.fromObject);
@@ -162,7 +164,7 @@ export class PackageManager {
         const packageURL = aPackage.url ? aPackage.url : aPackage.name;
         const customPackageJson = aPackage.package_descriptor;
 
-        const packager = new Packager(device.serialPort, this.compileFiles);
+        const packager = new Packager(device.serialPort, this.compileFiles, this.overwriteExisting);
         await packager.packageAndInstall(packageURL, null, customPackageJson);
         console.debug(`✅ Package installed: ${packageURL}`);
     }
