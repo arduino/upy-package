@@ -44,8 +44,14 @@ async function installPackage(packageName, selectedBoard) {
     await packageManager.installPackageFromURL(packageName, selectedBoard);
     return;
   }
-
-  const aPackage = await packageManager.getPackage(packageName);
+  
+  // Extract the package version from the package name if it's provided.
+  // e.g. 'arduino-iot-cloud-py@v1.3.3' -> 'v1.3.3'
+  const packageVersion = packageName.split("@")[1];
+  const packageNameWithoutVersion = packageName.split("@")[0];
+  // Get the package from the registry using the package name and version
+  // WARNING: This requires the registry to have versioned packages
+  const aPackage = await packageManager.getPackage(packageNameWithoutVersion, packageVersion);
 
   if (aPackage.required_runtime) {
     const boardRuntime = await deviceManager.getMicroPythonVersion(selectedBoard);

@@ -126,12 +126,19 @@ export class PackageManager {
 
     /**
      * Get a package by name
-     * @param {string} packageName
+     * @param {string} packageName The name of the package to get
+     * @param {string} version The version of the package to get. e.g. '1.0.0' or 'v1.0.0'
      * @returns {Promise<Package>} The package with the given name
      */
-    async getPackage(packageName) {
+    async getPackage(packageName, version = null) {
         const packageList = await this.getPackageList();
-        const foundPackage = packageList.find((pkg) => pkg.name === packageName);
+        let foundPackage;
+
+        if(version){
+            foundPackage = packageList.find((pkg) => pkg.name === packageName && pkg.version === version);
+        } else {
+            foundPackage = packageList.find((pkg) => pkg.name === packageName);
+        }
         
         if (!foundPackage) {
             throw new Error(`Package '${packageName}' not found.`);
