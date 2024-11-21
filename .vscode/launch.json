@@ -19,7 +19,8 @@
             // "args": ["install", "github:arduino/arduino-modulino-mpy"] // Test github: URL
             // "args": ["install", "arduino-iot-cloud-py"] // Test regular library
             // "args": ["install", "micropython-my9221"] // Test library with custom package.json
-            "args": ["install", "github:peterhinch/micropython_ir/ir_tx"] // Test library with subfolder
+            // "args": ["install", "github:peterhinch/micropython_ir/ir_tx"] // Test library with subfolder
+            "args": ["install", "github:arduino/arduino-iot-cloud-py@v1.3.3"] // Test library with version
 
             // "args": ["list", "micropython-rotary"]
             // "args": ["find", "cloud"]

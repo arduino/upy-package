@@ -143,10 +143,16 @@ export class PackageManager {
     /**
      * Function to install a package from a URL
      * @param {string} packageURL The URL of the package to install.
+     * Supported formats: 'github:owner/repo' or 'gitlab:owner/repo'
+     * or https://github.com/owner/repo or https://gitlab.com/owner/repo.
+     * It's also possible to indicate a specific package.json file or even single .py files.
+     * Supports versioning with the by appending @version e.g. 'arduino/arduino-iot-cloud-py@v1.3.3'.
      * @param {SerialDevice} device The board to install the package on.
      */
     async installPackageFromURL(packageURL, device) {
-        await this.installPackage({ "url" : packageURL }, device);
+        const packageVersion = packageURL.split("@")[1];
+        const packageURLWithoutVersion = packageURL.split("@")[0];
+        await this.installPackage({ "url" : packageURLWithoutVersion, "version" : packageVersion }, device);
     }
 
     /**
@@ -163,9 +169,10 @@ export class PackageManager {
         // so they are installed by supplying the name as the URL
         const packageURL = aPackage.url ? aPackage.url : aPackage.name;
         const customPackageJson = aPackage.package_descriptor;
+        const packageVersion = aPackage.version;
 
         const packager = new Packager(device.serialPort, this.compileFiles, this.overwriteExisting);
-        await packager.packageAndInstall(packageURL, null, customPackageJson);
+        await packager.packageAndInstall(packageURL, packageVersion, customPackageJson);
         console.debug(`✅ Package installed: ${packageURL}`);
     }
 }

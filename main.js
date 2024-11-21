@@ -114,7 +114,7 @@ export async function main() {
 
   program
     .command('install')
-    .argument('<package-names...>', 'Package names to install')
+    .argument('<package-names...>', 'Package names or URLs to install')
     // .option('--path <target-path>', 'Target path to install the package(s) to')
     .option('--debug', 'Enable debug output')
     .description('Install MicroPython packages on a connected Arduino board')
