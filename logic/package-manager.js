@@ -77,6 +77,7 @@ export class PackageManager {
                 throw new Error(`Error fetching package list from ${registryUrl}: ${error.message}`);
             }
         }
+        packages.sort((a, b) => a.name?.localeCompare(b.name));
         packages = packages.map(Package.fromObject);
         return packages;
     }
