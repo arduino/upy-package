@@ -1,2 +1,0 @@
-- Think about name clashes in multiple package indices.
-- Host index on CDN (setup cronjob in github actions?)
