@@ -1,6 +1,5 @@
-import { SerialDevice, SerialDeviceFinder } from './serialDeviceFinder.js';
+import { SerialDevice, SerialDeviceFinder, getMicroPythonVersionFromPort } from 'upy-packager';
 import * as descriptors from './descriptors.js';
-import { getMicroPythonVersionFromPort } from 'upy-packager';
 
 /**
  * Class to manage connected boards

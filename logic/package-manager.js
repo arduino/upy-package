@@ -1,7 +1,6 @@
 import yaml from 'js-yaml';
 import { satisfies, valid } from 'semver';
 import {Packager} from 'upy-packager';
-import { SerialDevice } from './board/serialDeviceFinder.js';
 
 const registryUrls = [
     'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
