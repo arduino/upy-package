@@ -33,6 +33,13 @@ export class DeviceManager {
 
             return device;
         });
+        
+        // Sort the device list by manufacturer name and device name
+        devices.sort((deviceA, deviceB) => {
+            const deviceAName = deviceA.manufacturer + deviceA.name;
+            const deviceBName = deviceB.manufacturer + deviceB.name;
+            return deviceAName.localeCompare(deviceBName);
+        });
         return devices;
     }
 
