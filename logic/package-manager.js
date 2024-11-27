@@ -99,6 +99,8 @@ export class PackageManager {
      */
     async findPackages(pattern) {
         const packageList = await this.getPackageList();
+        if(!pattern) return packageList; // Return all packages if no pattern is supplied
+        
         const fuse = new Fuse(packageList, {
             keys: ['name', 'description', 'tags'],
             minMatchCharLength: 3,
