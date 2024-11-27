@@ -1,6 +1,7 @@
 import yaml from 'js-yaml';
 import { satisfies, valid } from 'semver';
 import {Packager} from 'upy-packager';
+import Fuse from 'fuse.js';
 
 const registryUrls = [
     'https://raw.githubusercontent.com/arduino/package-index-py/main/package-list.yaml',
@@ -39,6 +40,10 @@ export class Package {
         if(this.description) {
             info += `\n\n${this.description}`;
         }
+
+        if(this.version) {
+            info += `\n\n#️⃣ Version: ${this.version}`;
+        }
         return info;
     }
 }
@@ -58,13 +63,18 @@ export class PackageManager {
     constructor(compileFiles = true, overwriteExisting = true) {
         this.compileFiles = compileFiles;
         this.overwriteExisting = overwriteExisting;
+        this.packages = null;
     }
 
     /**
      * Function to fetch and parse the package list from given registry URLs.
+     * @param {boolean} enforceRefresh Whether to force a refresh of the package list.
      * @returns {Promise<Array<Package>} List of available packages.
      */
-    async getPackageList() {
+    async getPackageList(enforceRefresh = false) {
+        if (this.packages && !enforceRefresh) {
+            return this.packages;
+        }
         let packages = [];
 
         for (const registryUrl of registryUrls) {
@@ -78,7 +88,8 @@ export class PackageManager {
         }
         packages.sort((a, b) => a.name?.localeCompare(b.name));
         packages = packages.map(Package.fromObject);
-        return packages;
+        this.packages = packages;
+        return this.packages;
     }
 
     /**
@@ -88,21 +99,14 @@ export class PackageManager {
      */
     async findPackages(pattern) {
         const packageList = await this.getPackageList();
-        if (packageList) {
-            const matchingPackages = packageList
-                .filter((pkg) => {
-                    const { name, description, tags } = pkg;
-                    return (
-                        name.toLowerCase().includes(pattern) ||
-                        (description && description.toLowerCase().includes(pattern)) ||
-                        (tags && tags.some((tag) => tag.toLowerCase().includes(pattern)))
-                    );
-                });
-
-            return matchingPackages;
-        } else {
-            return null;
-        }
+        const fuse = new Fuse(packageList, {
+            keys: ['name', 'description', 'tags'],
+            minMatchCharLength: 3,
+            threshold: 0.3,
+            includeMatches: true
+        });
+        const results = fuse.search(pattern);
+        return results.map(result => result.item);
     }
 
     /**
@@ -159,7 +163,10 @@ export class PackageManager {
     async installPackageFromURL(packageURL, device) {
         const packageVersion = packageURL.split("@")[1];
         const packageURLWithoutVersion = packageURL.split("@")[0];
-        await this.installPackage({ "url" : packageURLWithoutVersion, "version" : packageVersion }, device);
+        const aPackage = new Package();
+        aPackage.url = packageURLWithoutVersion;
+        aPackage.version = packageVersion;
+        await this.installPackage(aPackage, device);
     }
 
     /**
