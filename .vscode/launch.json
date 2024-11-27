@@ -24,7 +24,16 @@
             "args": ["install", "arduino-iot-cloud-py@v1.3.3"] // Test library with version
 
             // "args": ["list", "micropython-rotary"]
-            // "args": ["find", "cloud"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test search",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/main.js",
+            "args": ["find", "lcd"]
         }
     ]
 }
