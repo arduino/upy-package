@@ -104,7 +104,7 @@ export class PackageManager {
         const fuse = new Fuse(packageList, {
             keys: ['name', 'description', 'tags'],
             minMatchCharLength: 3,
-            threshold: 0.3,
+            threshold: 0.5,
             includeMatches: true
         });
         const results = fuse.search(pattern);
