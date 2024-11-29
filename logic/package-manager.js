@@ -102,7 +102,7 @@ export class PackageManager {
         if(!pattern) return packageList; // Return all packages if no pattern is supplied
         
         const fuse = new Fuse(packageList, {
-            keys: ['name', 'description', 'tags'],
+            keys: ['name', 'description', 'tags', 'author', 'url'],
             minMatchCharLength: 3,
             threshold: 0.5,
             includeMatches: true
