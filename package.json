@@ -1,6 +1,6 @@
 {
   "name": "upy-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "A command line tool to install libraries",
   "main": "index.js",
